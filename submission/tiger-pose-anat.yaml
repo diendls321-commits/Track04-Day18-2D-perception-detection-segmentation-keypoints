@@ -1,0 +1,35 @@
+path: /content/datasets/tiger-pose
+train: images/train
+val: images/val
+kpt_shape:
+- 12
+- 2
+flip_idx:
+- 0
+- 1
+- 2
+- 3
+- 7
+- 6
+- 5
+- 4
+- 10
+- 11
+- 8
+- 9
+names:
+  0: tiger
+kpt_names:
+  0:
+  - nose
+  - head
+  - withers
+  - tail_base
+  - right_hind_hock
+  - right_hind_paw
+  - left_hind_paw
+  - left_hind_hock
+  - right_front_wrist
+  - right_front_paw
+  - left_front_wrist
+  - left_front_paw

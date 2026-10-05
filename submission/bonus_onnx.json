@@ -1,0 +1,75 @@
+{
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu130",
+    "ultralytics": "8.4.171",
+    "onnxruntime": "1.30.0",
+    "CPU": "x86_64",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "input": [
+      1,
+      3,
+      640,
+      640
+    ],
+    "precision": "FP32",
+    "warmup": 3,
+    "repetitions": 30,
+    "output_shapes": {
+      "yolo26n_one2many.onnx": [
+        [
+          1,
+          84,
+          8400
+        ]
+      ],
+      "yolo26n_one2one.onnx": [
+        [
+          1,
+          300,
+          6
+        ]
+      ]
+    }
+  },
+  "latency": [
+    {
+      "Head": "one-to-many + NMS",
+      "conf": 0.25,
+      "preprocess (ms)": 6.74,
+      "inference (ms)": 98.49,
+      "postprocess (ms)": 1.65,
+      "số box": 5,
+      "tổng (ms)": 106.88
+    },
+    {
+      "Head": "one-to-many + NMS",
+      "conf": 0.001,
+      "preprocess (ms)": 4.65,
+      "inference (ms)": 72.32,
+      "postprocess (ms)": 2.03,
+      "số box": 186,
+      "tổng (ms)": 79.0
+    },
+    {
+      "Head": "one-to-one NMS-free",
+      "conf": 0.25,
+      "preprocess (ms)": 4.82,
+      "inference (ms)": 70.88,
+      "postprocess (ms)": 0.44,
+      "số box": 5,
+      "tổng (ms)": 76.14
+    },
+    {
+      "Head": "one-to-one NMS-free",
+      "conf": 0.001,
+      "preprocess (ms)": 4.7,
+      "inference (ms)": 68.84,
+      "postprocess (ms)": 0.46,
+      "số box": 177,
+      "tổng (ms)": 74.0
+    }
+  ]
+}

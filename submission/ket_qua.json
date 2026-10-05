@@ -1,0 +1,89 @@
+{
+  "progress": {
+    "box_iou": "ok",
+    "nms": "ok",
+    "batched_nms": "ok",
+    "average_precision": "ok",
+    "mask_iou": "ok",
+    "polygon_to_mask": "ok",
+    "mask_to_yolo_seg": "ok",
+    "autolabel": "ok",
+    "oks": "ok",
+    "joint_angle": "ok",
+    "FLIP_IDX": "ok"
+  },
+  "latency": [
+    {
+      "Cấu hình": "one-to-many + NMS, conf 0.25",
+      "preprocess (ms)": 3.36,
+      "inference (ms)": 25.45,
+      "postprocess (ms)": 3.14,
+      "số box": 5
+    },
+    {
+      "Cấu hình": "one-to-many + NMS, conf 0.001",
+      "preprocess (ms)": 3.14,
+      "inference (ms)": 23.38,
+      "postprocess (ms)": 2.74,
+      "số box": 203
+    },
+    {
+      "Cấu hình": "one-to-one NMS-free, conf 0.25",
+      "preprocess (ms)": 3.0,
+      "inference (ms)": 21.41,
+      "postprocess (ms)": 0.93,
+      "số box": 5
+    },
+    {
+      "Cấu hình": "one-to-one NMS-free, conf 0.001",
+      "preprocess (ms)": 3.44,
+      "inference (ms)": 26.14,
+      "postprocess (ms)": 1.33,
+      "số box": 204
+    }
+  ],
+  "result_4b": {
+    "flip_idx": "giải phẫu",
+    "epochs": 40,
+    "imgsz": 640,
+    "Box mAP50-95": 0.9303488492063492,
+    "Pose mAP50": 0.995,
+    "Pose mAP50-95": 0.4573462529843696,
+    "train (phút)": 4.3
+  },
+  "result_4c": [
+    {
+      "Model": "flip_idx giải phẫu",
+      "Pose mAP50-95 — val gốc": 0.4573462529843696,
+      "Pose mAP50-95 — val lật gương": 0.43884777970456634,
+      "Box mAP50-95 — val gốc": 0.9303488492063492,
+      "Box mAP50-95 — val lật gương": 0.9184411764705882
+    },
+    {
+      "Model": "flip_idx đồng nhất",
+      "Pose mAP50-95 — val gốc": 0.4169217121481716,
+      "Pose mAP50-95 — val lật gương": 0.29772304416546624,
+      "Box mAP50-95 — val gốc": 0.9036284624648736,
+      "Box mAP50-95 — val lật gương": 0.8939470218275991
+    }
+  ],
+  "answers": {
+    "Q1": "(a) Ảnh 640×480 tạo 6.300 dự đoán thô: 80×60 + 40×30 + 20×15 = 4.800 + 1.200 + 300.\nSố này nhỏ hơn 8.400 của ảnh 640×640 vì letterbox giữ tỉ lệ ảnh và auto=True cho phép đầu vào chữ nhật, nên mỗi tầng có ít vị trí lưới hơn; đây là số ứng viên, không phải số vật thể.\n(b) Nhãn gốc dạng tâm cxcywh nhưng bị đọc thành xywh với x,y là góc trên-trái, nên box dịch phải w/2 và xuống h/2 khi dùng cùng đơn vị.\nCách sửa là x1=cx-w/2, y1=cy-h/2, x2=cx+w/2, y2=cy+h/2; nếu nhãn chuẩn hoá thì nhân lại với W,H trước khi vẽ.",
+    "Q2": "Postprocess giảm từ 3.14 xuống 0.93 ms ở conf 0.25 và từ 2.74 xuống 1.33 ms ở conf 0.001; số box ở conf thấp tăng lên 203 và 204.\nInference ở conf 0.001 là 23.38 và 26.14 ms, nên không được coi mọi chênh lệch thời gian của một lần benchmark là lợi ích do NMS-free.\nConf thấp hoặc cảnh đông tạo nhiều ứng viên cần so IoU, khiến chi phí NMS tăng, còn head one-to-one tránh bước loại trùng đó.\nTrên CPU/NPU, hậu xử lý NMS và việc chuyển dữ liệu có thể thành nút thắt lớn hơn, nên lợi ích cần được đo riêng trên thiết bị triển khai.",
+    "Q3": "(a) Nếu hai công nhân cùng class có IoU 0.75, NMS ngưỡng 0.7 giữ box score cao hơn và loại box còn lại, gây đếm thiếu dù đó là hai người thật.\nTăng ngưỡng giảm loại nhầm ở cảnh đông nhưng giữ nhiều duplicate hơn; giảm ngưỡng loại trùng mạnh hơn nhưng tăng nguy cơ bỏ sót.\n(b) Head one-to-many tạo nhiều vị trí dương cho mỗi object, cung cấp tín hiệu giám sát dày hơn để backbone học đặc trưng.\nHead one-to-one dùng cùng backbone và học dự đoán duy nhất để suy luận không cần NMS, nên hai head bổ sung nhau khi train.",
+    "Q4": "(a) Bản đồ semantic cho 8 vùng person nhưng ảnh có 4 người, trong khi Mask R-CNN giữ 4 instance người: hai người tiếp xúc có thể nhập thành một vùng gây đếm thiếu, còn mask bị đứt hoặc pixel nhiễu tạo nhiều vùng gây đếm thừa.\nPanoptic segmentation gán cả class cho pixel và ID instance cho từng đối tượng thuộc nhóm thing, nhờ đó tách các người có cùng class.\n(b) Trong box xe buýt, semantic gán khoảng 63% pixel thành train.\nModel được huấn luyện trên Cityscapes nên chịu lệch miền khi gặp ảnh bus này và có thể nhầm hình dáng xe dài, cửa kính, bánh xe với train; đây là lỗi dự đoán chứ không phải Cityscapes không có class bus.",
+    "Q5": "(a) Mask R-CNN dùng lưới 28×28 cố định cho từng RoI, nên phóng lên object lớn có thể làm biên thô.\nYOLO dùng prototype chung trên toàn ảnh, vì vậy object nhỏ chiếm ít pixel ở feature mask và dễ mất chi tiết; mask còn bị giới hạn bởi cơ sở prototype dùng chung.\n(b) Nếu mỗi mask YOLO tự chọn IoU cao nhất thì nhiều mask có thể chọn cùng một instance Mask R-CNN, làm sai đối chiếu một-một.\nHungarian matching tối ưu tổng IoU với ràng buộc mỗi mask chỉ ghép một lần; khi đánh giá thật cần thêm ràng buộc class và ngưỡng IoU.",
+    "Q6": "(a) Điểm A tô gần toàn bộ người áo sáng (47441 pixel, IoU với mask từ box khoảng 0.99), còn điểm B tô mảnh nền giữa hai chân (2714 pixel, IoU khoảng 0.00).\nMột điểm chỉ xác định vị trí và có thể rơi vào nền hoặc bộ phận nhỏ trong box, còn box ràng buộc vùng và quy mô đối tượng tốt hơn, dù vẫn cần kiểm tra nhãn.\n(b) Dùng SAM trực tiếp khi cần tương tác/prompt linh hoạt, gán nhãn đối tượng mới hoặc xử lý ngoại tuyến và chấp nhận chi phí encoder.\nVới camera chạy liên tục, class cố định và yêu cầu latency thấp, dùng SAM tạo nhãn rồi kiểm duyệt để train YOLO26-seg nhỏ, triển khai detector-segmenter chuyên dụng.",
+    "Q7": "Với KP_THR=-100, đầu gối và mắt cá được vẽ sát mép dưới RoI người, dù các bộ phận thật nằm ngoài ảnh; y của chúng ở hai người lần lượt quanh 700.2 và 710.0 trên ảnh cao 720 pixel.\nMột số điểm còn chồng lên nhau, như đầu gối và mắt cá người 0 gần x=712.2.\nArgmax luôn trả một vị trí cực đại trong heatmap của RoI, kể cả khi không có tín hiệu đáng tin cho bộ phận bị khuất hoặc ngoài khung.\nVì vậy phải giữ điểm tin cậy từng keypoint và lọc trước khi vẽ hay tính luật, thay vì coi mọi tọa độ là một quan sát thật.",
+    "Q8": "Ở các mốc σ Gauss được thử, người 40×80 có OKS < 0.5 lần đầu tại σ=8 pixel, nên điểm cắt nằm khoảng 6–8 pixel; đây là độ lệch chuẩn nhiễu theo mỗi trục, không phải mọi điểm đều lệch đúng số pixel đó.\nNgười 250×500 chưa rơi dưới 0.5 trong dải 0–30 pixel, với OKS tại σ=30 là 0.647, nên không suy đoán điểm cắt ngoài đồ thị.\nσ mắt nhỏ hơn hông vì người gán nhãn thường định vị mắt nhất quán hơn, còn hông có vị trí mơ hồ và dễ che; cùng lệch 8 pixel thì mắt còn 0.53, hông còn 0.97.\nCamera trên cao chỉ thấy người cao khoảng 80 pixel nên vài pixel sai lệch đã gây phạt lớn, cần tăng độ phân giải hữu ích/crop người và tránh dùng keypoint mặt không đủ tin cậy cho quyết định.",
+    "Q9": "(a) Luật nghiêng >60° có thể báo nhầm người cúi nhặt đồ, nằm nghỉ hoặc khi camera bị xoay; nó có thể bỏ sót ngã về phía camera làm thân vẫn gần thẳng đứng trong ảnh, hoặc không kết luận vì vai/hông bị che.\n(b) Lần chạy này ảnh gốc cho 5 detection người (ảnh thực có 4), ảnh xoay 90° cho 3, với các thân nghiêng khoảng 90°,94°,83°; xoay ảnh tạo tư thế/phông nền khác phân phối train và detector không bất biến với phép xoay.\nVì ảnh xoay giữ nguyên người nhưng kết quả detect thay đổi, không thể dùng riêng số detection để khẳng định tất cả người nằm đã được nhận đúng.\n(c) Cần tracking và chuỗi thời gian, ước lượng chuyển động/chuyển tư thế, kiểm tra độ tin cậy và thời gian nằm, hiệu chỉnh góc camera, cùng quy trình xác minh cảnh báo và đánh giá trên dữ liệu ngã thật để hạn chế báo giả.",
+    "Q10": "Train có 210 hổ quay phải/0 quay trái và val có 53 quay phải/0 quay trái, nên val cùng hướng có thể vẫn cho mAP tốt với flip_idx đồng nhất và che lỗi trái/phải.\nÁnh xạ đồng nhất trong augmentation tạo nhãn sai theo quy ước giải phẫu trên ảnh gương; mAP val không nhất thiết giảm rõ vì val không chứa hướng gương đó.\nBug lộ ra khi triển khai gặp hổ quay trái, ảnh gương hoặc camera nhìn hướng đối diện: model có thể đổi nhầm danh tính chân dù box vẫn đúng.\nCần so sánh hai model trên val gốc lẫn val lật gương có nhãn giải phẫu và kiểm tra sai số từng keypoint thay vì chỉ mAP tổng.",
+    "Q11": "Một kiểu lỗi là nghi nhầm danh tính chân trái/phải: Frame_31.jpg có OKS 0.631, đổi cặp trái/phải thì tăng lên 0.657, với right_hind_hock/right_hind_paw sai lớn; tôi sẽ kiểm duyệt quy ước nhãn và bổ sung ảnh hai hướng với flip_idx giải phẫu đúng để giảm lỗi này.\nKiểu thứ hai là sai định vị bàn chân: ở Frame_67.jpg (OKS 0.643), hai bàn chân dự đoán bị kéo về giữa các vị trí GT, rõ ở right_front_paw và right_hind_paw, phù hợp với khó phân biệt chân phía xa bị che khi bước đi.\nTôi sẽ thêm ảnh ở nhiều pha bước/che khuất, kiểm duyệt lại các điểm mơ hồ và tăng độ phân giải hoặc crop hổ để giữ chi tiết bàn chân, rồi đánh giá riêng nhóm ảnh đó.\nĐổi trái/phải làm OKS tăng chỉ là dấu hiệu cần kiểm tra chứ không chứng minh mọi điểm đã bị đảo; toàn val có OKS trung bình 0.745, 0/53 ảnh không detect và 4/53 ảnh có dấu hiệu đảo.",
+    "Q12": "Dùng σ=1/12 cho mọi keypoint thuận tiện và nhất quán với metric Ultralytics, nhưng giả định mũi, gốc đuôi và các khớp có cùng độ mơ hồ gán nhãn là không hợp lý.\nMũi thường định vị rõ khi nhìn thấy, còn gốc đuôi hoặc chân bị che có bất định khác, nên cùng sai số pixel không nhất thiết phải bị phạt như nhau.\nTôi sẽ chọn ảnh đa dạng hướng/kích thước/che khuất, cho nhiều người gán nhãn độc lập lặp lại, rồi chuẩn hoá độ phân tán từng keypoint theo căn diện tích object để ước lượng σ_i.\nSau kiểm tra ngoại lệ và quy ước, cố định σ_i trước đánh giá và báo song song metric mặc định để so sánh công bằng, tránh chỉnh σ theo lỗi model trên val."
+  },
+  "env": {
+    "device": "cuda",
+    "torch": "2.11.0+cu130",
+    "ultralytics": "8.4.171"
+  }
+}
